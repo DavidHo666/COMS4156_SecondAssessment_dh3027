@@ -1,6 +1,7 @@
 package com.insomnia_studio.w4156pj.controller;
 
 import com.insomnia_studio.w4156pj.model.Post;
+import com.insomnia_studio.w4156pj.model.Token;
 import com.insomnia_studio.w4156pj.service.PostService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,12 +52,13 @@ public class PostControllerTest {
     UUID clientId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
 
     //when
-    when(postService.getPostById(postId, post)).thenReturn(post);
+    when(postService.getPostById(postId, token)).thenReturn(post);
 
     //test
-    Post foundPost = postController.getPostByPostId(postId, post);
+    Post foundPost = postController.getPostByPostId(postId, token);
 
     //assert
     assertEquals(post, foundPost);
@@ -71,12 +73,13 @@ public class PostControllerTest {
     UUID clientId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
 
     //when
-    when(postService.getPostById(postId, post)).thenReturn(null);
+    when(postService.getPostById(postId, token)).thenReturn(null);
 
     //test
-    Post foundPost = postController.getPostByPostId(postId, post);
+    Post foundPost = postController.getPostByPostId(postId, token);
 
     //assert
     assertNull(foundPost);
@@ -132,14 +135,15 @@ public class PostControllerTest {
     UUID clientId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
     Map<String, Boolean> expectResponse = new HashMap<>();
     expectResponse.put("Deleted", Boolean.TRUE);
 
     //when
-    when(postService.deletePostById(postId, post)).thenReturn(Boolean.TRUE);
+    when(postService.deletePostById(postId, token)).thenReturn(Boolean.TRUE);
 
     //test
-    Map<String, Boolean> deleteResponse = postController.deletePostByPostId(postId, post);
+    Map<String, Boolean> deleteResponse = postController.deletePostByPostId(postId, token);
 
     //assert
     assertEquals(expectResponse, deleteResponse);
@@ -153,14 +157,15 @@ public class PostControllerTest {
     UUID clientId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
     Map<String, Boolean> expectResponse = new HashMap<>();
     expectResponse.put("Deleted", Boolean.FALSE);
 
     //when
-    when(postService.deletePostById(postId, post)).thenReturn(Boolean.FALSE);
+    when(postService.deletePostById(postId, token)).thenReturn(Boolean.FALSE);
 
     //test
-    Map<String, Boolean> deleteResponse = postController.deletePostByPostId(postId, post);
+    Map<String, Boolean> deleteResponse = postController.deletePostByPostId(postId, token);
 
     //assert
     assertEquals(expectResponse, deleteResponse);

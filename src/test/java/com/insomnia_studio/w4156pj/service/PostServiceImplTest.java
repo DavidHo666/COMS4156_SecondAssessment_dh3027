@@ -6,6 +6,7 @@ import com.insomnia_studio.w4156pj.entity.CommentEntity;
 import com.insomnia_studio.w4156pj.entity.PostEntity;
 import com.insomnia_studio.w4156pj.entity.UserEntity;
 import com.insomnia_studio.w4156pj.model.Post;
+import com.insomnia_studio.w4156pj.model.Token;
 import com.insomnia_studio.w4156pj.repository.ClientEntityRepository;
 import com.insomnia_studio.w4156pj.repository.PostEntityRepository;
 import com.insomnia_studio.w4156pj.repository.UserEntityRepository;
@@ -53,6 +54,8 @@ public class PostServiceImplTest {
   private PostEntity newPostEntity;
   private Post updatePost;
 
+  private Token token;
+
   @BeforeEach
   public void setup() {
     //setup client
@@ -70,8 +73,8 @@ public class PostServiceImplTest {
     post.setContent("content");
     post.setTags(new HashSet<>(List.of("tag")));
     post.setUserId(user.getUserId());
-    postclient = new Post();
-    postclient.setClientId(client.getClientId());
+    token = new Token();
+    token.setClientId(client.getClientId());
 
     //setup postEntity
     postEntity = new PostEntity();
@@ -212,7 +215,7 @@ public class PostServiceImplTest {
     // when
     when(postRepository.findByPostId(post.getPostId())).thenReturn(postEntity);
     //test
-    Post foundpost = postserviceimpl.getPostById(post.getPostId(), postclient);
+    Post foundpost = postserviceimpl.getPostById(post.getPostId(), token);
     //assertion
     assertEquals(expectedpost, foundpost);
   }
@@ -227,7 +230,7 @@ public class PostServiceImplTest {
 
     //assertion
     ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
-        postserviceimpl.getPostById(post.getPostId(), postclient));
+        postserviceimpl.getPostById(post.getPostId(), token));
 
     assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
 
@@ -236,8 +239,8 @@ public class PostServiceImplTest {
   //JUnit Test for testgetPostByIdInvalidClient()
   @Test
   public void testgetPostClientNotMatch() {
-    postclient = new Post();
-    postclient.setClientId(client.getClientId());
+    token = new Token();
+    token.setClientId(client.getClientId());
     UUID fakeClientId = UUID.randomUUID();
     ClientEntity fakeClient = new ClientEntity(fakeClientId, "fakeClient");
     PostEntity fakepostEntity = new PostEntity(post.getPostId(), user, fakeClient);
@@ -247,7 +250,7 @@ public class PostServiceImplTest {
     //ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
     //postserviceimpl.getPostById(post.getPostId(),postclient));
     try {
-      Post getpost1 = postserviceimpl.getPostById(post.getPostId(), postclient);
+      Post getpost1 = postserviceimpl.getPostById(post.getPostId(), token);
     } catch (ResponseStatusException e) {
       assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
     }
@@ -298,6 +301,7 @@ public class PostServiceImplTest {
     postEntity.setTitle("testPost");
     postEntity.setContent("testPost");
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
     Boolean expectResponse = true;
 
     //when
@@ -305,7 +309,7 @@ public class PostServiceImplTest {
     Mockito.when(postRepository.deletePostEntityByPostId(postId)).thenReturn(1);
 
     //test
-    Boolean deleteResponse = postserviceimpl.deletePostById(postId, post);
+    Boolean deleteResponse = postserviceimpl.deletePostById(postId, token);
 
     //assert
     Assertions.assertEquals(expectResponse, deleteResponse);
@@ -325,6 +329,7 @@ public class PostServiceImplTest {
     postEntity.setTitle("testPost");
     postEntity.setContent("testPost");
     Post post = new Post(postId, fakeClientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
     Boolean expectResponse = true;
 
     //when
@@ -332,7 +337,7 @@ public class PostServiceImplTest {
 
     //test
     try {
-      Boolean deleteResponse = postserviceimpl.deletePostById(postId, post);
+      Boolean deleteResponse = postserviceimpl.deletePostById(postId, token);
     } catch (ResponseStatusException e) {
       Assertions.assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
     }
@@ -351,6 +356,7 @@ public class PostServiceImplTest {
     postEntity.setTitle("testPost");
     postEntity.setContent("testPost");
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
     Boolean expectResponse = true;
 
     //when
@@ -358,7 +364,7 @@ public class PostServiceImplTest {
 
     //test
     try {
-      Boolean deleteResponse = postserviceimpl.deletePostById(postId, post);
+      Boolean deleteResponse = postserviceimpl.deletePostById(postId, token);
     } catch (ResponseStatusException e) {
       Assertions.assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
     }
@@ -379,6 +385,7 @@ public class PostServiceImplTest {
     postEntity.setTitle("testPost");
     postEntity.setContent("testPost");
     Post post = new Post(postId, clientId, userId, "testPost", "testPost");
+    Token token = new Token(clientId);
     Boolean expectResponse = true;
 
     CommentEntity commentEntity = new CommentEntity(commentId, user, client, postEntity);
@@ -391,7 +398,7 @@ public class PostServiceImplTest {
 
     //test
     try {
-      Boolean deleteResponse = postserviceimpl.deletePostById(postId, post);
+      Boolean deleteResponse = postserviceimpl.deletePostById(postId, token);
     } catch (ResponseStatusException e) {
       Assertions.assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
     }

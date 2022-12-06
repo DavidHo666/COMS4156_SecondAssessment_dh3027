@@ -1,6 +1,7 @@
 package com.insomnia_studio.w4156pj.controller;
 
 import com.insomnia_studio.w4156pj.model.Post;
+import com.insomnia_studio.w4156pj.model.Token;
 import com.insomnia_studio.w4156pj.repository.PostEntityRepository;
 import com.insomnia_studio.w4156pj.service.PostService;
 import java.util.HashMap;
@@ -25,8 +26,8 @@ public class PostController {
   }
 
   @GetMapping("/{postId}")
-  public Post getPostByPostId(@PathVariable UUID postId, @RequestBody Post post) throws Exception {
-    return postService.getPostById(postId, post);
+  public Post getPostByPostId(@PathVariable UUID postId, @RequestBody Token token) throws Exception {
+    return postService.getPostById(postId, token);
   }
 
   @PutMapping("/{postId}")
@@ -38,10 +39,10 @@ public class PostController {
   /*** Define PostMethod .*/
   @DeleteMapping("/{postId}")
   @Transactional
-  public Map<String, Boolean> deletePostByPostId(@PathVariable UUID postId, @RequestBody Post post)
+  public Map<String, Boolean> deletePostByPostId(@PathVariable UUID postId, @RequestBody Token token)
           throws Exception {
     Map<String, Boolean> response = new HashMap<>();
-    boolean is_deleted = (postService.deletePostById(postId, post));
+    boolean is_deleted = (postService.deletePostById(postId, token));
     response.put("Deleted", is_deleted);
     return response;
   }

@@ -4,6 +4,7 @@ import com.insomnia_studio.w4156pj.entity.ClientEntity;
 import com.insomnia_studio.w4156pj.entity.PostEntity;
 import com.insomnia_studio.w4156pj.entity.UserEntity;
 import com.insomnia_studio.w4156pj.model.Post;
+import com.insomnia_studio.w4156pj.model.Token;
 import com.insomnia_studio.w4156pj.repository.ClientEntityRepository;
 import com.insomnia_studio.w4156pj.repository.PostEntityRepository;
 import com.insomnia_studio.w4156pj.repository.UserEntityRepository;
@@ -50,10 +51,10 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
-  public Post getPostById(UUID postId, Post post) throws ResponseStatusException {
+  public Post getPostById(UUID postId, Token token) throws ResponseStatusException {
     PostEntity postEntity = postEntityRepository.findByPostId(postId);
     if (postEntity != null) {
-      if (postEntity.getClient().getClientId().compareTo(post.getClientId()) != 0) {
+      if (postEntity.getClient().getClientId().compareTo(token.getClientId()) != 0) {
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid Client ID");
       }
       Post responsePost = new Post();
@@ -88,10 +89,10 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
-  public Boolean deletePostById(UUID postId, Post post) throws ResponseStatusException {
+  public Boolean deletePostById(UUID postId, Token token) throws ResponseStatusException {
     PostEntity postEntity = postEntityRepository.findByPostId(postId);
     if (postEntity != null) {
-      if (postEntity.getClient().getClientId().compareTo(post.getClientId()) != 0) {
+      if (postEntity.getClient().getClientId().compareTo(token.getClientId()) != 0) {
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid Client ID");
       }
       if (postEntity.getComments().size() > 0) {

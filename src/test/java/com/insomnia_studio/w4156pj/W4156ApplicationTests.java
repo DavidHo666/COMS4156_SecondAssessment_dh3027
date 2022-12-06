@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insomnia_studio.w4156pj.controller.CommentController;
 import com.insomnia_studio.w4156pj.controller.PostController;
 import com.insomnia_studio.w4156pj.controller.UserController;
-import com.insomnia_studio.w4156pj.model.Client;
-import com.insomnia_studio.w4156pj.model.Comment;
-import com.insomnia_studio.w4156pj.model.Post;
-import com.insomnia_studio.w4156pj.model.User;
+import com.insomnia_studio.w4156pj.model.*;
 import com.insomnia_studio.w4156pj.repository.ClientEntityRepository;
 import com.insomnia_studio.w4156pj.service.ClientService;
 import com.jayway.jsonpath.JsonPath;
@@ -265,11 +262,11 @@ class W4156ApplicationTests {
   @Test
   @Order(14)
   void testGetPostValidClientValidUser() throws Exception {
-    Post post = new Post(testClientId);
+    Token token = new Token(testClientId);
 
     mockMvc.perform(MockMvcRequestBuilders
             .get("/api/v1/post/".concat(testPostId.toString()))
-            .content(new ObjectMapper().writeValueAsString(post))
+            .content(new ObjectMapper().writeValueAsString(token))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.title").value("testPostTitle"))
@@ -304,13 +301,13 @@ class W4156ApplicationTests {
     tags.add("tag3");
     tags.add("tag4");
     Post post = new Post(testClientId, testUserId, "testPost2", "testPost2", tags);
-
+    Token token = new Token(testClientId);
     UUID postIdDelete = postController.addPost(post).getPostId();
 
     // Delete the post
     mockMvc.perform(MockMvcRequestBuilders
             .delete("/api/v1/post/".concat(postIdDelete.toString()))
-            .content(new ObjectMapper().writeValueAsString(post))
+            .content(new ObjectMapper().writeValueAsString(token))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isOk());
