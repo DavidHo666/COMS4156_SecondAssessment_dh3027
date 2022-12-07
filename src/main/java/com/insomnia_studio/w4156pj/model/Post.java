@@ -44,7 +44,7 @@ public class Post {
   }
   /*** Define PostMethod .*/
 
-  public Post(UUID clientId) {
-    this.clientId = clientId;
-  }
+//  public Post(UUID clientId) {
+//    this.clientId = clientId;
+//  }
 }
