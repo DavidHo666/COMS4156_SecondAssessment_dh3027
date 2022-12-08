@@ -4,11 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insomnia_studio.w4156pj.controller.CommentController;
 import com.insomnia_studio.w4156pj.controller.PostController;
 import com.insomnia_studio.w4156pj.controller.UserController;
+import com.insomnia_studio.w4156pj.entity.ClientEntity;
+import com.insomnia_studio.w4156pj.entity.CommentEntity;
+import com.insomnia_studio.w4156pj.entity.PostEntity;
+import com.insomnia_studio.w4156pj.entity.UserEntity;
 import com.insomnia_studio.w4156pj.model.Client;
 import com.insomnia_studio.w4156pj.model.Comment;
 import com.insomnia_studio.w4156pj.model.Post;
 import com.insomnia_studio.w4156pj.model.User;
 import com.insomnia_studio.w4156pj.repository.ClientEntityRepository;
+import com.insomnia_studio.w4156pj.repository.CommentEntityRepository;
+import com.insomnia_studio.w4156pj.repository.PostEntityRepository;
+import com.insomnia_studio.w4156pj.repository.UserEntityRepository;
 import com.insomnia_studio.w4156pj.service.ClientService;
 import com.jayway.jsonpath.JsonPath;
 import org.hamcrest.Matchers;
@@ -16,6 +23,7 @@ import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestMethodOrder(OrderAnnotation.class)
+//@TestMethodOrder(OrderAnnotation.class)
 class W4156ApplicationTests {
   //	UUID testClientId = UUID.fromString("2235566f-a37f-4b5f-a0d9-6961689c46c1");
   static UUID testClientId;
@@ -50,6 +58,12 @@ class W4156ApplicationTests {
   private MockMvc mockMvc;
   @Autowired
   private ClientEntityRepository clientEntityRepository;
+  @Autowired
+  private UserEntityRepository userEntityRepository;
+  @Autowired
+  private PostEntityRepository postEntityRepository;
+  @Autowired
+  private CommentEntityRepository commentEntityRepository;
   @Autowired
   private UserController userController;
   @Autowired
@@ -77,8 +91,14 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(2)
+//  @Order(2)
   void testAddUserValidClient() throws Exception {
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+
     User user = new User(testClientId, "test", "user");
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
@@ -96,7 +116,7 @@ class W4156ApplicationTests {
 
 
   @Test
-  @Order(3)
+//  @Order(3)
   void testAddUserInvalidClient() throws Exception {
     User user = new User(this.fakeClientId, "test", "user");
 
@@ -109,13 +129,23 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(4)
+//  @Order(4)
   void testGetUserValidUser() throws Exception {
-    User user = new User(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User userOnlyClientId = new User(testClientId);
 
     mockMvc.perform(MockMvcRequestBuilders
-            .get("/api/v1/user/".concat(testUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .get("/api/v1/user/".concat(userEntity.getUserId().toString()))
+            .content(new ObjectMapper().writeValueAsString(userOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.firstName").value("test"))
@@ -125,8 +155,13 @@ class W4156ApplicationTests {
 
   //
   @Test
-  @Order(5)
+//  @Order(5)
   void testGetUserInvalidUser() throws Exception {
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
     User user = new User(testClientId);
 
     mockMvc.perform(MockMvcRequestBuilders
@@ -138,27 +173,47 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(6)
+//  @Order(6)
   void testGetUserInvalidClient() throws Exception {
-    User user = new User(fakeClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User userOnlyClientId = new User(fakeClientId);
 
     mockMvc.perform(MockMvcRequestBuilders
-            .get("/api/v1/user/".concat(testUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .get("/api/v1/user/".concat(userEntity.getUserId().toString()))
+            .content(new ObjectMapper().writeValueAsString(userOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden());
   }
 
   @Test
-  @Order(7)
+//  @Order(7)
   void testUpdateUserValidUser() throws Exception {
-    User user = new User(testClientId, "test3", "user3");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User updatedUser = new User(testClientId, "test3", "user3");
 
     // Add a new user to be deleted
     mockMvc.perform(MockMvcRequestBuilders
-            .put("/api/v1/user/".concat(testUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .put("/api/v1/user/".concat(userEntity.getUserId().toString()))
+            .content(new ObjectMapper().writeValueAsString(updatedUser))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.firstName").value("test3"))
@@ -167,82 +222,142 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(8)
+//  @Order(8)
   void testUpdateUserInvalidUser() throws Exception {
-    User user = new User(testClientId, "test4", "user4");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User updatedUser = new User(testClientId, "test4", "user4");
 //		UUID userIdUpdate = UUID.fromString(testUserId.toString());
 
     // Add a new user to be deleted
     mockMvc.perform(MockMvcRequestBuilders
             .put("/api/v1/user/".concat(fakeUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .content(new ObjectMapper().writeValueAsString(updatedUser))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound());
   }
 
   @Test
-  @Order(9)
+//  @Order(9)
   void testUpdateUserInvalidClient() throws Exception {
-    User user = new User(fakeClientId, "test4", "user4");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User updatedUser = new User(fakeClientId, "test4", "user4");
 //		UUID userIdUpdate = UUID.fromString("012b3669-2fc7-4c35-8216-38aa68862129");
 
     // Add a new user to be deleted
     mockMvc.perform(MockMvcRequestBuilders
-            .put("/api/v1/user/".concat(testUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .put("/api/v1/user/".concat(userEntity.getUserId().toString()))
+            .content(new ObjectMapper().writeValueAsString(updatedUser))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden());
   }
 
   @Test
-  @Order(10)
+//  @Order(10)
   void testDeleteUserValidClient() throws Exception {
-    User user = new User(testClientId, "test4", "user4");
-
-    UUID userIdDelete = userController.addUser(user).getUserId();
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User userOnlyClientId = new User(testClientId);
 
     // Delete the post
     mockMvc.perform(MockMvcRequestBuilders
-            .delete("/api/v1/user/".concat(userIdDelete.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .delete("/api/v1/user/".concat(userEntity.getUserId().toString()))
+            .content(new ObjectMapper().writeValueAsString(userOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isOk());
   }
 
   @Test
-  @Order(11)
+//  @Order(11)
   void testDeleteUserInvalidClient() throws Exception {
-    User user = new User(fakeClientId, "test4", "user4");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User userOnlyClientId = new User(fakeClientId);
 
     // Delete the post
     mockMvc.perform(MockMvcRequestBuilders
-            .delete("/api/v1/user/".concat(testUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .delete("/api/v1/user/".concat(userEntity.getUserId().toString()))
+            .content(new ObjectMapper().writeValueAsString(userOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden());
   }
 
   @Test
-  @Order(12)
+//  @Order(12)
   void testDeleteUserInvalidUser() throws Exception {
-    User user = new User(testClientId, "test4", "user4");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    User userOnlyClientId = new User(testClientId);
 
     // Delete the post
     mockMvc.perform(MockMvcRequestBuilders
             .delete("/api/v1/user/".concat(fakeUserId.toString()))
-            .content(new ObjectMapper().writeValueAsString(user))
+            .content(new ObjectMapper().writeValueAsString(userOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound());
   }
 
   @Test
-  @Order(13)
+//  @Order(13)
   void testAddPostValidClientValidUser() throws Exception {
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+
     Set<String> tags = new HashSet<>();
     tags.add("tag1");
     tags.add("tag2");
@@ -263,13 +378,35 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(14)
+//  @Order(14)
   void testGetPostValidClientValidUser() throws Exception {
-    Post post = new Post(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Post postOnlyClientId = new Post(testClientId);
 
     mockMvc.perform(MockMvcRequestBuilders
             .get("/api/v1/post/".concat(testPostId.toString()))
-            .content(new ObjectMapper().writeValueAsString(post))
+            .content(new ObjectMapper().writeValueAsString(postOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.title").value("testPostTitle"))
@@ -279,16 +416,38 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(15)
+//  @Order(15)
   void testUpdatePostValidClientValidUser() throws Exception {
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
     Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+
+    tags = new HashSet<>();
     tags.add("tag3");
     tags.add("tag4");
-    Post post = new Post(testClientId, testUserId, "testPost2", "testPost2", tags);
+    Post updatedPost = new Post(testClientId, testUserId, "testPost2", "testPost2", tags);
 
     mockMvc.perform(MockMvcRequestBuilders
             .put("/api/v1/post/".concat(testPostId.toString()))
-            .content(new ObjectMapper().writeValueAsString(post))
+            .content(new ObjectMapper().writeValueAsString(updatedPost))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("testPost2"))
@@ -298,27 +457,64 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(16)
+//  @Order(16)
   void testDeletePostValidClientValidUser() throws Exception {
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
     Set<String> tags = new HashSet<>();
-    tags.add("tag3");
-    tags.add("tag4");
-    Post post = new Post(testClientId, testUserId, "testPost2", "testPost2", tags);
-
-    UUID postIdDelete = postController.addPost(post).getPostId();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Post postOnlyClientId = new Post(testClientId);
 
     // Delete the post
     mockMvc.perform(MockMvcRequestBuilders
-            .delete("/api/v1/post/".concat(postIdDelete.toString()))
-            .content(new ObjectMapper().writeValueAsString(post))
+            .delete("/api/v1/post/".concat(testPostId.toString()))
+            .content(new ObjectMapper().writeValueAsString(postOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isOk());
   }
 
   @Test
-  @Order(17)
+//  @Order(17)
   void testAddCommentValidClientValidUser() throws Exception {
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
     Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
@@ -338,13 +534,42 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(18)
+//  @Order(18)
   void testGetCommentValidClientValidUser() throws Exception {
-    Comment comment = new Comment(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .get("/api/v1/comment/".concat(testCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.jsonPath("$.postId").value(testPostId.toString()))
@@ -357,13 +582,42 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(19)
+//  @Order(19)
   void testGetCommentInValidClientValidUser() throws Exception {
-    Comment comment = new Comment(fakeClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(fakeClientId);
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .get("/api/v1/comment/".concat(testCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden())
@@ -371,13 +625,42 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(20)
+//  @Order(20)
   void testGetCommentInvalidClientInvalidComment() throws Exception {
-    Comment comment = new Comment(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .get("/api/v1/comment/".concat(fakeCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound())
@@ -385,13 +668,42 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(21)
+//  @Order(21)
   void testUpdateCommentValidClientValidComment() throws Exception {
-    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment2");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment updatedComment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment2");
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .put("/api/v1/comment/".concat(testCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(updatedComment))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.jsonPath("$.postId").value(testPostId.toString()))
@@ -404,13 +716,42 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(22)
+//  @Order(22)
   void testUpdateCommentInvalidClientValidComment() throws Exception {
-    Comment comment = new Comment(fakeClientId, testUserId, testPostId, 10, 2, "testComment2");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment updatedComment = new Comment(fakeClientId, testUserId, testPostId, 10, 2, "testComment2");
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .put("/api/v1/comment/".concat(testCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(updatedComment))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden())
@@ -418,13 +759,42 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(23)
+//  @Order(23)
   void testUpdateCommentValidClientInvalidComment() throws Exception {
-    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment2");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment updatedComment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment2");
 
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .put("/api/v1/comment/".concat(fakeCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(updatedComment))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound())
@@ -432,12 +802,41 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(24)
+//  @Order(24)
   void testAddLikeToCommentValidClientValidCommentId() throws Exception {
-    Comment comment = new Comment(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .post("/api/v1/comment/".concat(testCommentId.toString()).concat("/addLike"))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.jsonPath("$.likesNum").value(11))
@@ -446,12 +845,41 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(25)
+//  @Order(25)
   void testAddDislikeToCommentValidClientValidCommentId() throws Exception {
-    Comment comment = new Comment(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .post("/api/v1/comment/".concat(testCommentId.toString()).concat("/addDislike"))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.jsonPath("$.dislikesNum").value(3))
@@ -460,12 +888,41 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(26)
+//  @Order(26)
   void testAddLikeToCommentInvalidClientValidCommentId() throws Exception {
-    Comment comment = new Comment(fakeClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(fakeClientId);
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .post("/api/v1/comment/".concat(testCommentId.toString()).concat("/addLike"))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden())
@@ -474,12 +931,41 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(27)
+//  @Order(27)
   void testAddDislikeToCommentInvalidClientValidCommentId() throws Exception {
-    Comment comment = new Comment(fakeClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(fakeClientId);
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .post("/api/v1/comment/".concat(testCommentId.toString()).concat("/addDislike"))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden())
@@ -488,12 +974,41 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(28)
+//  @Order(28)
   void testAddLikeToCommentValidClientInvalidCommentId() throws Exception {
-    Comment comment = new Comment(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .post("/api/v1/comment/".concat(fakeCommentId.toString()).concat("/addLike"))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound())
@@ -502,12 +1017,41 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(29)
+//  @Order(29)
   void testAddDislikeToCommentValidClientInvalidCommentId() throws Exception {
-    Comment comment = new Comment(testClientId);
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
     MvcResult result = mockMvc.perform(MockMvcRequestBuilders
             .post("/api/v1/comment/".concat(fakeCommentId.toString()).concat("/addDislike"))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound())
@@ -516,11 +1060,39 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(30)
+//  @Order(30)
   void testDeleteCommentValidClientValidComment() throws Exception {
-    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment3");
-
-    UUID commentIdDelete = commentController.addComment(comment, testPostId).getCommentId();
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(testClientId);
+    UUID commentIdDelete = commentEntity.getCommentId();
 
     // Delete the comment
     mockMvc.perform(MockMvcRequestBuilders
@@ -532,28 +1104,86 @@ class W4156ApplicationTests {
   }
 
   @Test
-  @Order(31)
+//  @Order(31)
   void testDeleteCommentInvalidClientValidComment() throws Exception {
-    Comment comment = new Comment(fakeClientId, testUserId, testPostId, 10, 2, "testComment4");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(fakeClientId);
 
     // Delete the comment
     mockMvc.perform(MockMvcRequestBuilders
             .delete("/api/v1/comment/".concat(testCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isForbidden());
   }
 
   @Test
-  @Order(32)
+//  @Order(32)
   void testDeleteCommentValidClientInvalidComment() throws Exception {
-    Comment comment = new Comment(fakeClientId, testUserId, testPostId, 10, 2, "testComment5");
+    Client client = new Client(this.testClientName);
+    ClientEntity clientEntity = new ClientEntity();
+    BeanUtils.copyProperties(client, clientEntity);
+    clientEntity = clientEntityRepository.save(clientEntity);
+    testClientId = clientEntity.getClientId();
+    UserEntity userEntity = new UserEntity();
+    User user = new User(testClientId, "test", "user");
+    BeanUtils.copyProperties(user, userEntity);
+    userEntity.setClient(clientEntity);
+    userEntity = userEntityRepository.save(userEntity);
+    testUserId = userEntity.getUserId();
+    Set<String> tags = new HashSet<>();
+    tags.add("tag1");
+    tags.add("tag2");
+    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
+    PostEntity postEntity = new PostEntity();
+    BeanUtils.copyProperties(post, postEntity);
+    postEntity.setUser(userEntity);
+    postEntity.setClient(clientEntity);
+    postEntity = postEntityRepository.save(postEntity);
+    testPostId = postEntity.getPostId();
+    Comment comment = new Comment(testClientId, testUserId, testPostId, 10, 2, "testComment");
+    CommentEntity commentEntity = new CommentEntity();
+    BeanUtils.copyProperties(comment, commentEntity);
+    commentEntity.setPost(postEntity);
+    commentEntity.setUser(userEntity);
+    commentEntity.setClient(clientEntity);
+    commentEntity = commentEntityRepository.save(commentEntity);
+    testCommentId = commentEntity.getCommentId();
+    Comment commentOnlyClientId = new Comment(fakeClientId);
 
     // Delete the comment
     mockMvc.perform(MockMvcRequestBuilders
             .delete("/api/v1/comment/".concat(fakeCommentId.toString()))
-            .content(new ObjectMapper().writeValueAsString(comment))
+            .content(new ObjectMapper().writeValueAsString(commentOnlyClientId))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isNotFound()
