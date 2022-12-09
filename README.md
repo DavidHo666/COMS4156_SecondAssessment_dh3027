@@ -1,14 +1,16 @@
 # Part 1B
 Dawei He
 
-I have added a Token class in directory src/main/java/com/insomnia_studio/w4156pj/model. This class is used to only
-receive the clientId when client perform Get or Delete post request. So that the Post class 
-(src/main/java/com/insomnia_studio/w4156pj/model/Post.java) is not used for receiving clientId and passing it to 
-authentication.
+I have added a Token class in 
+https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/model/Token.java. 
+This class is used to only receive the clientId when client perform Get or Delete post request. So that the Post class in
+https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/model/Post.java 
+is not used for receiving clientId and passing it to authentication.
 
 
 Steps:
-1. Add a new Token class in the directory src/main/java/com/insomnia_studio/w4156pj/model with only one field UUID 
+1. Add a new Token class in https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/model/Token.java
+with only one field UUID 
 clientId and a constructor.
 ````
 public class Token {
@@ -20,15 +22,17 @@ public class Token {
 }
 ````
 
-2. Delete the following constructor that only initializing the clientId field in 
-src/main/java/com/insomnia_studio/w4156pj/model/Post.java
+2. Delete the following constructor that only initializing the clientId field in
+   https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/model/Post.java
 ````
   public Post(UUID clientId) {
     this.clientId = clientId;
   }
 ````
 
-3. Change the the Get method and Delete method in PostController from:
+3. Change the the Get method and Delete method in PostController
+   https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/controller/PostController.java
+from:
 ````
    public Post getPostByPostId(@PathVariable UUID postId, @RequestBody Post post) throws Exception {
         return postService.getPostById(postId, post);
@@ -56,9 +60,11 @@ to:
         return response;
   }
 ````
-4. Change method signature of getPostById and deletePostById in both PostService interface 
-(src/main/java/com/insomnia_studio/w4156pj/service/PostService.java) and PostService implementationPost
-(src/main/java/com/insomnia_studio/w4156pj/service/PostServiceImpl.java) from:
+4. Change method signature of getPostById and deletePostById in both PostService interface in
+https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/service/PostService.java
+and PostService impl in
+https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/service/PostServiceImpl.java 
+from:
 ````
 getPostById(UUID postId, Post post) throws Exception;
 Boolean deletePostById(UUID postId, Post post) throws Exception;
@@ -68,9 +74,11 @@ to:
 getPostById(UUID postId, Token token) throws Exception;
 Boolean deletePostById(UUID postId, Token token) throws Exception;
 ````
-5. In the implementation of method getPostById and deletePostById, all variables that use Post object to store 
-clientId are changed to token. So that we can get clientId and verify it by calling Token object instead of Post Object. 
-Therefore, for both classes Post and Token, they only have one singular responsibility.
+5. In the implementation of method getPostById and deletePostById in
+   https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/main/java/com/insomnia_studio/w4156pj/service/PostServiceImpl.java
+, all variables that use Post object to only store clientId are changed to Token object. So that we can get clientId and 
+verify it by calling Token object instead of Post Object. Therefore, for both classes Post and Token, they only have one 
+singular responsibility.
 
 Before:
 ````
@@ -145,7 +153,9 @@ After:
  ````
 
 
-6. For unit test in src/test/java/com/insomnia_studio/w4156pj/controller/PostControllerTest.java and 
-src/test/java/com/insomnia_studio/w4156pj/service/PostServiceImplTest.java, all variables that use post to store clientId
-   are also changed to Token object, which is very similar to the previous step.
+6. For unit test in 
+https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/test/java/com/insomnia_studio/w4156pj/controller/PostControllerTest.java
+and
+https://github.com/DavidHo666/COMS4156_SecondAssessment_dh3027/blob/p1b/src/test/java/com/insomnia_studio/w4156pj/service/PostServiceImplTest.java,
+all variables that use Post object to store clientId are also changed to Token object, which is very similar to the previous step.
 
