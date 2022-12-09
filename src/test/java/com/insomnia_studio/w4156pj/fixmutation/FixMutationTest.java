@@ -95,36 +95,4 @@ public class FixMutationTest {
         .andExpect(jsonPath("$", Matchers.hasValue(true)));
   }
 
-  void testDeletePostValidClientValidUser() throws Exception {
-    Client client = new Client(this.testClientName);
-    ClientEntity clientEntity = new ClientEntity();
-    BeanUtils.copyProperties(client, clientEntity);
-    clientEntity = clientEntityRepository.save(clientEntity);
-    testClientId = clientEntity.getClientId();
-    UserEntity userEntity = new UserEntity();
-    User user = new User(testClientId, "test", "user");
-    BeanUtils.copyProperties(user, userEntity);
-    userEntity.setClient(clientEntity);
-    userEntity = userEntityRepository.save(userEntity);
-    testUserId = userEntity.getUserId();
-    Set<String> tags = new HashSet<>();
-    tags.add("tag1");
-    tags.add("tag2");
-    Post post = new Post(testClientId, testUserId, "testPostTitle", "testPostContent", tags);
-    PostEntity postEntity = new PostEntity();
-    BeanUtils.copyProperties(post, postEntity);
-    postEntity.setUser(userEntity);
-    postEntity.setClient(clientEntity);
-    postEntity = postEntityRepository.save(postEntity);
-    testPostId = postEntity.getPostId();
-    Post postOnlyClientId = new Post(testClientId);
-
-    // Delete the post
-    mockMvc.perform(MockMvcRequestBuilders
-            .delete("/api/v1/post/".concat(testPostId.toString()))
-            .content(new ObjectMapper().writeValueAsString(postOnlyClientId))
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON))
-        .andExpect(MockMvcResultMatchers.status().isOk());
-  }
 }
