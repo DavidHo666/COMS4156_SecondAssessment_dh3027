@@ -92,7 +92,8 @@ public class FixMutationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(jsonPath("$", Matchers.hasValue(true)));
+        .andExpect(jsonPath("$", Matchers.hasValue(true)))
+        .andExpect(jsonPath("$", Matchers.hasKey("Deleted: ")));
   }
 
 }
